@@ -176,3 +176,17 @@ Durability: If the network goes down, data sits safely on the disk until the shi
 Disk I/O: Can wear out SSDs or slow down apps if the disk sub-system is already at capacity.
 
 Complexity: Requires managing a log shipper (Vector/Fluent-Bit) and handling file rotation.
+
+
+### Telemetry Shipper Comparison
+
+| Feature | **Vector** | **Fluent Bit** | **OTel Collector** | **Filebeat** |
+| :--- | :--- | :--- | :--- | :--- |
+| **Language** | Rust | C | Go | Go |
+| **Primary Goal** | High-perf Observability | Resource-limited VMs | Unified Telemetry | Elastic Stack Logs |
+| **RAM Footprint** | ~15-30 MB | **< 10 MB** | ~50-100 MB+ | ~30-50 MB |
+| **Performance** | **Ultra-High** | High | Medium/High | Medium |
+| **License** | MPL-2.0 (Open) | Apache 2.0 (Open) | Apache 2.0 (Open) | Elastic (Restrictive) |
+| **Backpressure** | Excellent (Disk/Mem) | Good | Moderate | Moderate |
+
+
