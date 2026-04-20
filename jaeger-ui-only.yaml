@@ -1,0 +1,34 @@
+extensions:
+  jaeger_storage:
+    backends:
+      memory_backend:
+        memory:
+          max_traces: 10000
+  jaeger_query:
+    storage:
+      traces: memory_backend
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: "0.0.0.0:5317" # Shifted to avoid conflict with OTel Collector
+
+exporters:
+  jaeger_storage_exporter:
+    trace_storage: memory_backend
+
+service:
+  extensions: [jaeger_storage, jaeger_query]
+  telemetry:
+    metrics:
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: "0.0.0.0"
+                port: 8889 # Shifted to avoid conflict with OTel Collector
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [jaeger_storage_exporter]

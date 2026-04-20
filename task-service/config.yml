@@ -1,0 +1,15 @@
+serviceName: task-service
+otelCollectorEndpoint: http://localhost:4318/v1/traces
+notificationServiceEndpoint: http://localhost:8082/notifications/send
+notificationRecipient: tasks@example.com
+notificationChannel: EMAIL
+traceLogPath: ./data/task-traces.log
+otlpBatchLogPath: ./data/task-otlp-batches.log
+
+server:
+  applicationConnectors:
+    - type: http
+      port: 8080
+  adminConnectors:
+    - type: http
+      port: 8081

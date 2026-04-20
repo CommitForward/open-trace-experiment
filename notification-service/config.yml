@@ -1,0 +1,13 @@
+serviceName: notification-service
+otelCollectorEndpoint: http://localhost:4318/v1/traces
+notificationLogPath: ./data/notifications.log
+traceLogPath: ./data/notification-traces.log
+otlpBatchLogPath: ./data/notification-otlp-batches.log
+
+server:
+  applicationConnectors:
+    - type: http
+      port: 8082
+  adminConnectors:
+    - type: http
+      port: 8083
