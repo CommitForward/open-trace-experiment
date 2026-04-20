@@ -2,55 +2,44 @@
 
 ## Typical Architecture
 ```
-[ VM INSTANCE (1 to N) ]
-+------------------------------------+
-|                                    |
-|   +----------------------------+   |
-|   |      Java Application      |   |
-|   |  (Maven / OTel Java SDK)   |   |
-|   +--------------|-------------+   |
-|                  | OTLP/gRPC       |
-|   +--------------v-------------+   |
-|   |    OTel Host Agent         |   |
-|   |   (Binary / Systemd)       |   |
-|   |                            |   |
-|   |  - Resource Detection      |   |
-|   |  - Batching                |   |
-|   |  - Kafka Exporter          |   |
-|   +--------------|-------------+   |
-|                  |                 |
-+------------------|-----------------+
-                   |
-                   v
-    +------------------------------+
-    |         APACHE KAFKA         |
-    |  (Topic: otel_traces_proto)  |
-    +--------------|--------------+
-                   |
-                   v
-    +------------------------------+
-    |    OTel Gateway Cluster      |
-    |    (Dedicated VM Pool)       |
-    |                              |
-    |  - Kafka Receiver            |
-    |  - Tail-Based Sampling       |
-    |  - ClickHouse Exporter       |
-    +--------------|--------------+
-                   |
-                   v
-    +------------------------------+
-    |         CLICKHOUSE           |
-    |      (Columnar DB)           |
-    |                              |
-    |  - Trace & Span Tables       |
-    |  - 30 Day TTL / Retention    |
-    +--------------|--------------+
-                   |
-                   v
-    +------------------------------+
-    |      GRAFANA / JAEGER        |
-    |    (Visualization UI)        |
-    +------------------------------+
+[ VM - SERVICE 1 ]      [ VM - SERVICE 2 ]      [ VM - SERVICE N ]
+  +--------------+        +--------------+        +--------------+
+  |  Java App    |        |  Java App    |        |  Java App    |
+  +------|-------+        +------|-------+        +------|-------+
+         | OTLP/gRPC (Port 4317) |                       | 
+  +------v-------+        +------v-------+        +------v-------+
+  |  otelcol     |        |  otelcol     |        |  otelcol     |
+  | (Host Agent) |        | (Host Agent) |        | (Host Agent) |
+  +------|-------+        +------|-------+        +------|-------+
+         |                       |                       |
+         +-----------+           |           +-----------+
+                     |           |           |
+                     v           v           v
+              +---------------------------------+
+              |          APACHE KAFKA           |
+              |     (Port 9092 | Proto)         |
+              +----------------|----------------+
+                               |
+                               v
+              +---------------------------------+
+              |     otelcol-contrib             |
+              |     (Gateway Cluster)           |
+              |                                 |
+              | - Consumes from Kafka           |
+              | - Batching (Port 4317/4318)     |
+              +----------------|----------------+
+                               |
+                               v
+              +---------------------------------+
+              |          CLICKHOUSE DB          |
+              |        (Port 9000 | Native)     |
+              +----------------|----------------+
+                               |
+                               v
+              +---------------------------------+
+              |        GRAFANA / JAEGER         |
+              |       (Visual Analytics)        |
+              +---------------------------------+
 
 
 ```
