@@ -119,3 +119,60 @@ Risk to Stability: If Kafka becomes slow, the "backpressure" is felt inside your
 Manual Metadata: You must write code to discover the VM's hostname/ID and manually inject it into the Resource attributes of your OTel SDK configuration.
 
 Tight Coupling: If you want to change how data is sent (e.g., add a different header or change the topic), you must re-compile and re-deploy your entire application.
+
+# Architecture 3
+```  
+[ VM INSTANCE (1 to N) ]
++------------------------------------+
+|                                    |
+|   +----------------------------+   |
+|   |      Java Application      |   |
+|   |   (OTel File Exporter)     |   |
+|   +--------------|-------------+   |
+|                  | Disk Write (Fastest)
+|   +--------------v-------------+   |
+|   |    Local Disk / Pipe       |   |
+|   |   (Buffer / .json log)     |   |
+|   +--------------|-------------+   |
+|                  | File Tail/Read  |
+|   +--------------v-------------+   |
+|   |    Lightweight Shipper     |   |
+|   |  (Vector / Fluent-Bit)     |   |
+|   +--------------|-------------+   |
+|                  |                 |
++------------------|-----------------+
+                   |
+                   | Network (Asynchronous)
+                   v
+    +------------------------------+
+    |         APACHE KAFKA         |
+    |    (Distributed Log Hub)     |
+    +--------------|--------------+
+                   |
+                   v
+    +------------------------------+
+    |    OTel Gateway Cluster      |
+    |    (Final Processing Pool)   |
+    +--------------|--------------+
+                   |
+                   v
+    +------------------------------+
+    |         CLICKHOUSE           |
+    |      (Columnar Storage)      |
+    +--------------|--------------+
+                   |
+                   v
+    +------------------------------+
+    |      GRAFANA / JAEGER        |
+    |    (Visual Analytics)        |
+    +------------------------------+
+```  
+### Pros 
+Absolute Decoupling: Java app writes to a local file/pipe; network health has zero impact on app performance.
+
+Durability: If the network goes down, data sits safely on the disk until the shipper resumes.
+
+### Cons
+Disk I/O: Can wear out SSDs or slow down apps if the disk sub-system is already at capacity.
+
+Complexity: Requires managing a log shipper (Vector/Fluent-Bit) and handling file rotation.
