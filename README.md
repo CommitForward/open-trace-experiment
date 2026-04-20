@@ -1,5 +1,6 @@
-# open-trace-experimen text
+# open-trace-experiment 
 
+## Typical Architecture
 ```
 [ VM INSTANCE (1 to N) ]
 +------------------------------------+
